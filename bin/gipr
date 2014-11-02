@@ -1,0 +1,52 @@
+#!/usr/bin/env ruby
+
+require 'optparse'
+require 'gipr'
+
+options = {}
+
+
+optparser = OptionParser.new do |opts|
+opts.banner = <<-EOS
+Usage: gipr [options] <pull-request-branch-name>
+
+Uploads patches as Github pull requests.
+EOS
+	options[:base] = 'origin/master'
+	opts.on("-b", "--base BRANCH", "Upstream base branch name") do |base|
+		options[:base] = base
+	end
+
+	opts.on("-h", "--help", "Print this help message and exit") do
+		puts opts
+		exit(0)
+	end
+end
+
+optparser.parse!
+
+if ARGV.length == 0
+	puts "Error: missing pull request branch name"
+	puts optparser
+	exit(-1)
+end
+if ARGV.length > 1
+	puts "Error: too many arguments"
+	puts optparser
+	exit(-1)
+end
+
+puts options.inspect
+puts ARGV.inspect
+
+target_branch = ARGV[0]
+
+if not Gipr.clean_index?
+	puts "Pull request requires a clean index"
+	exit(-2)
+end
+
+# read input
+input = STDIN.read()
+
+Gipr.create_pr(options[:base], target_branch, input)
